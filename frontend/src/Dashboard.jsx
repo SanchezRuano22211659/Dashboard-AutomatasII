@@ -6,7 +6,7 @@ import { useAuth } from "./context/AuthContext";
 import { useSensoresDisponibles, useUltimasLecturas, useLecturasSensor } from "./hooks/useSensores";
 import { useState } from "react";
 
-function Dashboard({ onLogout }) {
+function Dashboard({ onLogout, onOpenCompiler }) {
     const { usuario } = useAuth();
 
     const [selectedSensor, setSelectedSensor] = useState("");
@@ -28,6 +28,9 @@ function Dashboard({ onLogout }) {
                         {usuario?.username}
                         <small className="header_rol">{usuario?.rol}</small>
                     </span>
+                <button className="header_btn_logout" onClick={onOpenCompiler}>
+                        Compilador en vivo
+                    </button>
                     <button className="header_btn_logout" onClick={onLogout}>
                         Cerrar sesión
                     </button>

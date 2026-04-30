@@ -89,6 +89,54 @@ function inferirTipoSensor(sensorName) {
     return mapa[sensorName] || null;
 }
 
+// POST /api/dext/analizar-debug
+// Procesa texto plano y devuelve información de todas las etapas
+router.post("/analizar-debug", async (req, res) => {
+    const { contenido } = req.body;
+    if (!contenido) return res.status(400).json({ error: "No hay contenido" });
+
+    try {
+        const bloques = extraerBloques(contenido);
+        const bloqueAProcesar = bloques[0] || contenido;
+
+        const parseResult = parseInput(bloqueAProcesar) || {};
+        
+        let fields = {};
+        let semantic = { valid: true, errors: [], warnings: [] };
+
+        // Corregido: Verificar si el array de errores está vacío o no existe
+        const tieneErroresLex = parseResult.lexErrors && parseResult.lexErrors.length > 0;
+        const tieneErroresSin = parseResult.parseErrors && parseResult.parseErrors.length > 0;
+
+        if (!tieneErroresLex && !tieneErroresSin && parseResult.cst) {
+            fields = cstToFields(parseResult.cst);
+            semantic = analyzeSemantics(fields);
+        }
+
+        const errores = [
+            ...(parseResult.lexErrors?.map(e => `Léxico: ${e.message}`) || []),
+            ...(parseResult.parseErrors?.map(e => `Sintáctico: ${e.message}`) || []),
+            ...(semantic.errors?.map(e => `Semántico: ${e}`) || [])
+        ];
+
+        return res.json({
+            lexico: (parseResult.tokens || []).map(t => ({
+                name: t.tokenType?.name || "TOKEN",
+                image: t.image,
+                startLine: t.startLine,
+                startColumn: t.startColumn
+            })),
+            sintactico: parseResult.cst || {},
+            semantico: fields,
+            errores: errores,
+            advertencias: semantic.warnings || []
+        });
+    } catch (err) {
+        console.error("Error en analizar-debug:", err);
+        return res.status(500).json({ error: "Error interno al procesar el código: " + err.message });
+    }
+});
+
 // POST /api/dext/procesar
 // Recibe un archivo .dext, lo valida bloque a bloque con el compilador
 // y persiste las lecturas válidas en la BD

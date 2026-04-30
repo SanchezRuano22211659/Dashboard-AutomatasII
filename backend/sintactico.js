@@ -49,7 +49,7 @@ export function parseInput(text) {
   const lexResult = SensorLexer.tokenize(text);
 
   if (lexResult.errors.length > 0) {
-    return { lexErrors: lexResult.errors };
+    return { lexErrors: lexResult.errors, tokens: lexResult.tokens };
   }
 
   // Crea el parser aquí
@@ -60,8 +60,8 @@ export function parseInput(text) {
   const cst = parserInstance.sensorObject();
 
   if (parserInstance.errors.length > 0) {
-    return { parseErrors: parserInstance.errors };
+    return { parseErrors: parserInstance.errors, tokens: lexResult.tokens };
   }
 
-  return { cst };
+  return { cst, tokens: lexResult.tokens };
 }
